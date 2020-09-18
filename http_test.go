@@ -15,11 +15,14 @@ import (
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/encoding"
 	"github.com/devopsfaith/krakend/proxy"
+	"github.com/go-redis/redis/v8"
+	httpcache2 "github.com/gregjones/httpcache"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_ok(t *testing.T) {
 	testCacheSystem(t, func(t *testing.T, URL string) {
-		testClient(t, sampleCfg, URL)
+		testClient(t, sampleInMemoryCfg, URL)
 	}, 1)
 }
 
@@ -56,10 +59,32 @@ func testClient(t *testing.T, cfg *config.Backend, URL string) {
 	}
 }
 
+func TestCreateRedisCacheClient(t *testing.T) {
+	clientFactory := NewHTTPClient(sampleRedisCfg)
+	client := clientFactory(context.Background())
+
+	cache := client.Transport.(*httpcache2.Transport).Cache
+	assert.IsType(t, &RedisCache{}, cache)
+	rc := cache.(*RedisCache)
+
+	assert.IsType(t, &redis.Client{}, rc.client)
+}
+
+func TestCreateRedisClusterCacheClient(t *testing.T) {
+	clientFactory := NewHTTPClient(sampleRedisClusterCfg)
+	client := clientFactory(context.Background())
+
+	cache := client.Transport.(*httpcache2.Transport).Cache
+	assert.IsType(t, &RedisCache{}, cache)
+	rc := cache.(*RedisCache)
+
+	assert.IsType(t, &redis.ClusterClient{}, rc.client)
+}
+
 func TestBackendFactory(t *testing.T) {
 	testCacheSystem(t, func(t *testing.T, testURL string) {
-		backendFactory := BackendFactory(sampleCfg)
-		backendProxy := backendFactory(sampleCfg)
+		backendFactory := BackendFactory(sampleInMemoryCfg)
+		backendProxy := backendFactory(sampleInMemoryCfg)
 		ctx := context.Background()
 		URL, _ := url.Parse(testURL)
 
@@ -82,11 +107,35 @@ func TestBackendFactory(t *testing.T) {
 }
 
 var (
-	statusOKMsg = `{"status": "ok"}`
-	sampleCfg   = &config.Backend{
+	statusOKMsg       = `{"status": "ok"}`
+	sampleInMemoryCfg = &config.Backend{
 		Decoder: encoding.JSONDecoder,
 		ExtraConfig: map[string]interface{}{
 			Namespace: map[string]interface{}{},
+		},
+	}
+	sampleRedisCfg = &config.Backend{
+		Decoder: encoding.JSONDecoder,
+		ExtraConfig: map[string]interface{}{
+			Namespace: map[string]interface{}{
+				"type": "redis",
+				"redis": map[string]interface{}{
+					"address": "ip:port",
+					"mode":    "redis",
+				},
+			},
+		},
+	}
+	sampleRedisClusterCfg = &config.Backend{
+		Decoder: encoding.JSONDecoder,
+		ExtraConfig: map[string]interface{}{
+			Namespace: map[string]interface{}{
+				"type": "redis",
+				"redis": map[string]interface{}{
+					"address": "ip2:port2",
+					"mode":    "rediscluster",
+				},
+			},
 		},
 	}
 )
