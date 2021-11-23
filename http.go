@@ -3,7 +3,6 @@ package httpcache
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/krakendio/httpcache"
@@ -27,40 +26,50 @@ const Namespace = "github.com/devopsfaith/krakend-httpcache"
 
 // NewHTTPClient creates a HTTPClientFactory using an in-memory-cached http client
 func NewHTTPClient(cfg *config.Backend, nextF client.HTTPClientFactory) client.HTTPClientFactory {
-	raw, ok := cfg.ExtraConfig[Namespace]
-	if !ok {
-		return nextF
-	}
+	cacheCfg, err := ConfigGetter(cfg)
+	if err == nil {
+		if cacheCfg == nil {
+			return nextF
+		}
 
-	var cache Cache
+		switch cacheCfg.Type {
+		case BackendMemory:
+			var cache Cache
 
-	if b, err := json.Marshal(raw); err == nil {
-		var opts options
-		if err := json.Unmarshal(b, &opts); err == nil && opts.Shared {
-			cache = globalCache
+			if cacheCfg.Shared {
+				cache = globalCache
+			}
+
+			if cache == nil {
+				cache = httpcache.NewMemoryCache()
+			}
+
+			return func(ctx context.Context) *http.Client {
+				httpClient := nextF(ctx)
+				return &http.Client{
+					Transport: &httpcache.Transport{
+						Transport: httpClient.Transport,
+						Cache:     cache,
+					},
+					CheckRedirect: httpClient.CheckRedirect,
+					Jar:           httpClient.Jar,
+					Timeout:       httpClient.Timeout,
+				}
+			}
+		case BackendRedis:
+			var r Client
+			switch cacheCfg.RedisConfig.Mode {
+			case RedisModeRedis:
+				r = NewRedis(cacheCfg.RedisConfig)
+			case RedisModeCluster:
+				r = NewRedisCluster(cacheCfg.RedisConfig)
+			}
+			return func(_ context.Context) *http.Client {
+				return &http.Client{Transport: NewRedisCacheTransport(NewRedisCache(r, cacheCfg.RedisConfig.Ttl))}
+			}
 		}
 	}
-
-	if cache == nil {
-		cache = httpcache.NewMemoryCache()
-	}
-
-	return func(ctx context.Context) *http.Client {
-		httpClient := nextF(ctx)
-		return &http.Client{
-			Transport: &httpcache.Transport{
-				Transport: httpClient.Transport,
-				Cache:     cache,
-			},
-			CheckRedirect: httpClient.CheckRedirect,
-			Jar:           httpClient.Jar,
-			Timeout:       httpClient.Timeout,
-		}
-	}
+	return client.NewHTTPClient
 }
 
 var globalCache = httpcache.NewMemoryCache()
-
-type options struct {
-	Shared bool `json:"shared"`
-}

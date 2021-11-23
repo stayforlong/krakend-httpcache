@@ -85,7 +85,7 @@ func TestClient_dedicated(t *testing.T) {
 		cfg := &config.Backend{
 			Decoder: encoding.JSONDecoder,
 			ExtraConfig: map[string]interface{}{
-				Namespace: false,
+				Namespace: map[string]interface{}{},
 			},
 		}
 
@@ -93,21 +93,6 @@ func TestClient_dedicated(t *testing.T) {
 
 		if hits := b.Count(); hits != 1 {
 			t.Errorf("unexpected number of hits. got: %d, want: 1", hits)
-		}
-	}
-
-	{
-		cfg := &config.Backend{
-			Decoder: encoding.JSONDecoder,
-			ExtraConfig: map[string]interface{}{
-				Namespace: map[string]interface{}{},
-			},
-		}
-
-		testClient(t, cfg, b.URL())
-
-		if hits := b.Count(); hits != 2 {
-			t.Errorf("unexpected number of hits. got: %d, want: 2", hits)
 		}
 	}
 }
