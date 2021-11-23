@@ -5,14 +5,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/proxy"
-	"github.com/devopsfaith/krakend/transport/http/client"
 	"github.com/gregjones/httpcache"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/proxy"
+	"github.com/luraproject/lura/transport/http/client"
 )
-
-// Namespace is the key to use to store and access the custom config data
-const Namespace = "github.com/devopsfaith/krakend-httpcache"
 
 var (
 	memTransport = httpcache.NewMemoryCacheTransport()
@@ -21,13 +18,29 @@ var (
 
 // NewHTTPClient creates a HTTPClientFactory using an in-memory-cached http client
 func NewHTTPClient(cfg *config.Backend) client.HTTPClientFactory {
-	_, ok := cfg.ExtraConfig[Namespace]
-	if !ok {
-		return client.NewHTTPClient
+	c, err := ConfigGetter(cfg)
+	if err == nil {
+		cacheCfg := c.(Config)
+
+		switch cacheCfg.Type {
+		case BackendMemory:
+			return func(_ context.Context) *http.Client {
+				return &memClient
+			}
+		case BackendRedis:
+			var r Client
+			switch cacheCfg.RedisConfig.Mode {
+			case RedisModeRedis:
+				r = NewRedis(cacheCfg.RedisConfig)
+			case RedisModeCluster:
+				r = NewRedisCluster(cacheCfg.RedisConfig)
+			}
+			return func(_ context.Context) *http.Client {
+				return &http.Client{Transport: NewRedisCacheTransport(NewRedisCache(r, cacheCfg.RedisConfig.Ttl))}
+			}
+		}
 	}
-	return func(_ context.Context) *http.Client {
-		return &memClient
-	}
+	return client.NewHTTPClient
 }
 
 // BackendFactory returns a proxy.BackendFactory that creates backend proxies using
