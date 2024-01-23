@@ -4,10 +4,12 @@ package httpcache
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/krakendio/httpcache"
+	redistrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/go-redis/redis.v8"
 )
 
 type Client interface {
@@ -15,7 +17,7 @@ type Client interface {
 }
 
 func NewRedis(cfg RedisConfig) Client {
-	return redis.NewClient(&redis.Options{
+	c := redis.NewClient(&redis.Options{
 		Addr:               cfg.Address,
 		DialTimeout:        cfg.DialTimeout,
 		ReadTimeout:        cfg.ReadTimeout,
@@ -26,10 +28,12 @@ func NewRedis(cfg RedisConfig) Client {
 		PoolSize:           cfg.PoolSize,
 		PoolTimeout:        cfg.PoolTimeout,
 	})
+	redistrace.WrapClient(c, redistrace.WithServiceName(serviceNameFromAddresses([]string{cfg.Address})))
+	return c
 }
 
 func NewRedisCluster(cfg RedisConfig) Client {
-	return redis.NewClusterClient(&redis.ClusterOptions{
+	c := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:              []string{cfg.Address},
 		DialTimeout:        cfg.DialTimeout,
 		ReadTimeout:        cfg.ReadTimeout,
@@ -40,6 +44,8 @@ func NewRedisCluster(cfg RedisConfig) Client {
 		PoolSize:           cfg.PoolSize,
 		PoolTimeout:        cfg.PoolTimeout,
 	})
+	redistrace.WrapClient(c, redistrace.WithServiceName(serviceNameFromAddresses([]string{cfg.Address})))
+	return c
 }
 
 type RedisCache struct {
@@ -74,4 +80,10 @@ func (c *RedisCache) Delete(key string) {
 func NewRedisCacheTransport(c Cache) *httpcache.Transport {
 	t := httpcache.NewTransport(c)
 	return t
+}
+
+func serviceNameFromAddresses(addr []string) string {
+	prefix := "redis-"
+	delimiter := "_"
+	return prefix + strings.Join(addr, delimiter)
 }
