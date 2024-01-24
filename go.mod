@@ -40,3 +40,5 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/krakendio/httpcache v0.0.0-20221129153752-65a87a5c2bc5 => github.com/stayforlong/httpcache v0.0.0-20240124132931-b6729276e6da

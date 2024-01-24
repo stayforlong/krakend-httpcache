@@ -1,6 +1,7 @@
 package httpcache_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -20,32 +21,34 @@ func TestRedisCache(t *testing.T) {
 	client := httpcache.NewMockClient(ctrl)
 	ttl := 10 * time.Millisecond
 
+	ctx := context.Background()
+
 	c := httpcache.NewRedisCache(client, ttl)
 
 	t.Run("Calls client to set new value", func(t *testing.T) {
 		k := "setkey"
 		v := []byte("aresponse")
 
-		client.EXPECT().Set(gomock.Any(), k, v, ttl).Times(1)
+		client.EXPECT().Set(ctx, k, v, ttl).Times(1)
 
-		c.Set(k, v)
+		c.Set(ctx, k, v)
 	})
 
 	t.Run("Calls client to delete existing value", func(t *testing.T) {
 		k := "delkey"
 
-		client.EXPECT().Del(gomock.Any(), k)
+		client.EXPECT().Del(ctx, k)
 
-		c.Delete(k)
+		c.Delete(ctx, k)
 	})
 
 	t.Run("Get returns ko when cant find in cache", func(t *testing.T) {
 		k := "getko"
 
 		res := redis.NewStringResult("", errors.New(""))
-		client.EXPECT().Get(gomock.Any(), k).Times(1).Return(res)
+		client.EXPECT().Get(ctx, k).Times(1).Return(res)
 
-		_, ok := c.Get(k)
+		_, ok := c.Get(ctx, k)
 
 		assert.False(t, ok)
 	})
@@ -54,9 +57,9 @@ func TestRedisCache(t *testing.T) {
 		k := "getok"
 		v := "foundincache"
 		res := redis.NewStringResult(v, nil)
-		client.EXPECT().Get(gomock.Any(), k).Times(1).Return(res)
+		client.EXPECT().Get(ctx, k).Times(1).Return(res)
 
-		r, ok := c.Get(k)
+		r, ok := c.Get(ctx, k)
 
 		assert.True(t, ok)
 		assert.Equal(t, v, string(r))

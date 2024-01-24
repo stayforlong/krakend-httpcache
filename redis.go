@@ -60,8 +60,8 @@ func NewRedisCache(client Client, ttl time.Duration) *RedisCache {
 	}
 }
 
-func (c *RedisCache) Get(key string) (responseBytes []byte, ok bool) {
-	r := c.client.Get(context.Background(), key)
+func (c *RedisCache) Get(ctx context.Context, key string) (responseBytes []byte, ok bool) {
+	r := c.client.Get(ctx, key)
 	rb, err := r.Bytes()
 	if err != nil {
 		return []byte{}, false
@@ -69,12 +69,12 @@ func (c *RedisCache) Get(key string) (responseBytes []byte, ok bool) {
 	return rb, true
 }
 
-func (c *RedisCache) Set(key string, responseBytes []byte) {
-	c.client.Set(context.Background(), key, responseBytes, c.ttl)
+func (c *RedisCache) Set(ctx context.Context, key string, responseBytes []byte) {
+	c.client.Set(ctx, key, responseBytes, c.ttl)
 }
 
-func (c *RedisCache) Delete(key string) {
-	c.client.Del(context.Background(), key)
+func (c *RedisCache) Delete(ctx context.Context, key string) {
+	c.client.Del(ctx, key)
 }
 
 func NewRedisCacheTransport(c Cache) *httpcache.Transport {
