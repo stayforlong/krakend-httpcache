@@ -1,12 +1,12 @@
 module github.com/krakendio/krakend-httpcache/v2
 
-go 1.17
+go 1.20
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.4.4
 	github.com/krakendio/httpcache v0.0.0-20221129153752-65a87a5c2bc5
-	github.com/luraproject/lura/v2 v2.2.3
+	github.com/luraproject/lura/v2 v2.6.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.8.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.42.1
@@ -33,12 +33,12 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/krakendio/httpcache v0.0.0-20221129153752-65a87a5c2bc5 => github.com/stayforlong/httpcache v0.0.0-20240124132931-b6729276e6da
+replace github.com/krakendio/httpcache v0.0.0-20221129153752-65a87a5c2bc5 => github.com/stayforlong/httpcache v0.0.0-20240312074927-dd17ed9e2f6b
