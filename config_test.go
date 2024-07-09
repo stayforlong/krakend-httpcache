@@ -65,7 +65,6 @@ func TestConfig_ok(t *testing.T) {
 		assert.Equal(t, httpcache.RedisDefaultWriteTimeout, rc.WriteTimeout)
 		assert.Equal(t, httpcache.RedisDefaultMaxRetries, rc.MaxRetries)
 		assert.Equal(t, httpcache.RedisDefaultIdleTimeout, rc.IdleTimeout)
-		assert.Equal(t, httpcache.RedisDefaultIdleCheckFrequency, rc.IdleCheckFrequency)
 		assert.Equal(t, httpcache.RedisDefaultPoolSize, rc.PoolSize)
 		assert.Equal(t, httpcache.RedisDefaultPoolTimeout, rc.PoolTimeout)
 		assert.Equal(t, httpcache.RedisDefaultTtl, rc.Ttl)
@@ -79,7 +78,6 @@ func TestConfig_ok(t *testing.T) {
 		wt := "25us"
 		mr := 666
 		it := "99s"
-		icf := "14ms"
 		ps := 77
 		pt := "878s"
 		ttl := "65432s"
@@ -89,17 +87,16 @@ func TestConfig_ok(t *testing.T) {
 				httpcache.Namespace: map[string]interface{}{
 					"type": "redis",
 					"redis": map[string]interface{}{
-						"address":            address,
-						"mode":               mode,
-						"dialTimeout":        dt,
-						"readTimeout":        rt,
-						"writeTimeout":       wt,
-						"maxRetries":         mr,
-						"idleTimeout":        it,
-						"idleCheckFrequency": icf,
-						"poolSize":           ps,
-						"poolTimeout":        pt,
-						"ttl":                ttl,
+						"address":      address,
+						"mode":         mode,
+						"dialTimeout":  dt,
+						"readTimeout":  rt,
+						"writeTimeout": wt,
+						"maxRetries":   mr,
+						"idleTimeout":  it,
+						"poolSize":     ps,
+						"poolTimeout":  pt,
+						"ttl":          ttl,
 					},
 				},
 			},
@@ -121,8 +118,6 @@ func TestConfig_ok(t *testing.T) {
 		assert.Equal(t, mr, rc.MaxRetries)
 		exIt, _ := time.ParseDuration(it)
 		assert.Equal(t, exIt, rc.IdleTimeout)
-		exIcf, _ := time.ParseDuration(icf)
-		assert.Equal(t, exIcf, rc.IdleCheckFrequency)
 		assert.Equal(t, ps, rc.PoolSize)
 		exPt, _ := time.ParseDuration(pt)
 		assert.Equal(t, exPt, rc.PoolTimeout)

@@ -1,4 +1,4 @@
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE -self_package=$GOPACKAGE
+//go:generate go run go.uber.org/mock/mockgen -source=$GOFILE -destination=mock_$GOFILE -package=$GOPACKAGE
 
 package httpcache
 
@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/krakendio/httpcache"
-	redistrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/go-redis/redis.v8"
+	"github.com/redis/go-redis/v9"
+	redistrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/redis/go-redis.v9"
 )
 
 type Client interface {
@@ -18,15 +18,14 @@ type Client interface {
 
 func NewRedis(cfg RedisConfig) Client {
 	c := redis.NewClient(&redis.Options{
-		Addr:               cfg.Address,
-		DialTimeout:        cfg.DialTimeout,
-		ReadTimeout:        cfg.ReadTimeout,
-		WriteTimeout:       cfg.WriteTimeout,
-		MaxRetries:         cfg.MaxRetries,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
-		PoolSize:           cfg.PoolSize,
-		PoolTimeout:        cfg.PoolTimeout,
+		Addr:            cfg.Address,
+		DialTimeout:     cfg.DialTimeout,
+		ReadTimeout:     cfg.ReadTimeout,
+		WriteTimeout:    cfg.WriteTimeout,
+		MaxRetries:      cfg.MaxRetries,
+		ConnMaxIdleTime: cfg.IdleTimeout,
+		PoolSize:        cfg.PoolSize,
+		PoolTimeout:     cfg.PoolTimeout,
 	})
 	redistrace.WrapClient(c, redistrace.WithServiceName(serviceNameFromAddresses([]string{cfg.Address})))
 	return c
@@ -34,15 +33,14 @@ func NewRedis(cfg RedisConfig) Client {
 
 func NewRedisCluster(cfg RedisConfig) Client {
 	c := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:              []string{cfg.Address},
-		DialTimeout:        cfg.DialTimeout,
-		ReadTimeout:        cfg.ReadTimeout,
-		WriteTimeout:       cfg.WriteTimeout,
-		MaxRetries:         cfg.MaxRetries,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
-		PoolSize:           cfg.PoolSize,
-		PoolTimeout:        cfg.PoolTimeout,
+		Addrs:           []string{cfg.Address},
+		DialTimeout:     cfg.DialTimeout,
+		ReadTimeout:     cfg.ReadTimeout,
+		WriteTimeout:    cfg.WriteTimeout,
+		MaxRetries:      cfg.MaxRetries,
+		ConnMaxIdleTime: cfg.IdleTimeout,
+		PoolSize:        cfg.PoolSize,
+		PoolTimeout:     cfg.PoolTimeout,
 	})
 	redistrace.WrapClient(c, redistrace.WithServiceName(serviceNameFromAddresses([]string{cfg.Address})))
 	return c

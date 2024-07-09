@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/golang/mock/gomock"
 	httpcache2 "github.com/krakendio/httpcache"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	httpcache "github.com/krakendio/krakend-httpcache/v2"
 )
