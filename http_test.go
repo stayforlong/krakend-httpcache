@@ -34,15 +34,21 @@ func TestClient_shared(t *testing.T) {
 		{
 			Name: "shared memory cache",
 			Cfg: map[string]interface{}{
-				"shared": true,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared": true,
+				},
 			},
 		},
 		{
 			Name: "shared LRU cache",
 			Cfg: map[string]interface{}{
-				"shared":    true,
-				"max_items": 10,
-				"max_size":  100000,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared":    true,
+					"max_items": 10,
+					"max_size":  100000,
+				},
 			},
 		},
 	}
@@ -81,29 +87,41 @@ func TestClient_refresh(t *testing.T) {
 		{
 			Name: "shared memory cache",
 			Cfg: map[string]interface{}{
-				"shared": true,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared": true,
+				},
 			},
 		},
 		{
 			Name: "dedicated memory cache",
 			Cfg: map[string]interface{}{
-				"shared": false,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared": false,
+				},
 			},
 		},
 		{
 			Name: "shared LRU cache",
 			Cfg: map[string]interface{}{
-				"shared":    true,
-				"max_items": 10,
-				"max_size":  100000,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared":    true,
+					"max_items": 10,
+					"max_size":  100000,
+				},
 			},
 		},
 		{
 			Name: "dedicated LRU cache",
 			Cfg: map[string]interface{}{
-				"shared":    false,
-				"max_items": 10,
-				"max_size":  100000,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared":    false,
+					"max_items": 10,
+					"max_size":  100000,
+				},
 			},
 		},
 	}
@@ -143,15 +161,21 @@ func TestClient_dedicated(t *testing.T) {
 		{
 			Name: "dedicated memory cache",
 			Cfg: map[string]interface{}{
-				"shared": false,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared": false,
+				},
 			},
 		},
 		{
 			Name: "dedicated LRU cache",
 			Cfg: map[string]interface{}{
-				"shared":    false,
-				"max_items": 10,
-				"max_size":  100000,
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared":    false,
+					"max_items": 10,
+					"max_size":  100000,
+				},
 			},
 		},
 	}
@@ -210,9 +234,12 @@ func TestClient_lruEvictions(t *testing.T) {
 		Decoder: encoding.JSONDecoder,
 		ExtraConfig: map[string]interface{}{
 			Namespace: map[string]interface{}{
-				"shared":    true,
-				"max_items": 100,
-				"max_size":  250, // Only one backend response will fit in the cache
+				"type": "memory",
+				"memory": map[string]interface{}{
+					"shared":    true,
+					"max_items": 100,
+					"max_size":  250, // Only one backend response will fit in the cache
+				},
 			},
 		},
 	}
