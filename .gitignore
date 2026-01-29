@@ -1,2 +1,4 @@
 coverage.out
 vendor/
+mock_*.go
+.idea/

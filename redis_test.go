@@ -1,0 +1,90 @@
+package httpcache_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	httpcache2 "github.com/krakend/httpcache"
+	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
+	httpcache "github.com/krakend/krakend-httpcache/v2"
+)
+
+func TestRedisCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	client := httpcache.NewMockClient(ctrl)
+	ttl := 10 * time.Millisecond
+
+	ctx := context.Background()
+
+	c := httpcache.NewRedisCache(client, ttl)
+
+	t.Run("Calls client to set new value", func(t *testing.T) {
+		k := "setkey"
+		v := []byte("aresponse")
+
+		client.EXPECT().Set(ctx, k, v, ttl).Times(1)
+
+		c.Set(ctx, k, v)
+	})
+
+	t.Run("Calls client to delete existing value", func(t *testing.T) {
+		k := "delkey"
+
+		client.EXPECT().Del(ctx, k)
+
+		c.Delete(ctx, k)
+	})
+
+	t.Run("Get returns ko when cant find in cache", func(t *testing.T) {
+		k := "getko"
+
+		res := redis.NewStringResult("", errors.New(""))
+		client.EXPECT().Get(ctx, k).Times(1).Return(res)
+
+		_, ok := c.Get(ctx, k)
+
+		assert.False(t, ok)
+	})
+
+	t.Run("Get returns value when found in cache", func(t *testing.T) {
+		k := "getok"
+		v := "foundincache"
+		res := redis.NewStringResult(v, nil)
+		client.EXPECT().Get(ctx, k).Times(1).Return(res)
+
+		r, ok := c.Get(ctx, k)
+
+		assert.True(t, ok)
+		assert.Equal(t, v, string(r))
+	})
+}
+
+func TestNewRedis(t *testing.T) {
+	rc := httpcache.NewRedis(httpcache.RedisConfig{})
+
+	assert.IsType(t, &redis.Client{}, rc)
+}
+
+func TestNewRedisCluster(t *testing.T) {
+	rc := httpcache.NewRedisCluster(httpcache.RedisConfig{})
+
+	assert.IsType(t, &redis.ClusterClient{}, rc)
+}
+
+func TestNewRedisCacheTransport(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	rc := httpcache.NewMockCache(ctrl)
+
+	rct := httpcache.NewRedisCacheTransport(rc)
+
+	assert.IsType(t, &httpcache2.Transport{}, rct)
+}
